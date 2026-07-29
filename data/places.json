@@ -1,0 +1,48 @@
+[
+  {
+    "id": "cafe-ruhepol-stuttgart-beispiel",
+    "name": "Café Ruhepol (Beispiel)",
+    "category": "Café",
+    "city": "Stuttgart",
+    "country": "Deutschland",
+    "address": "Musterstraße 1, 70173 Stuttgart",
+    "lat": 48.7758,
+    "lng": 9.1829,
+    "website": "",
+    "criteria": {
+      "light": 1,
+      "noise": 1,
+      "music": 1,
+      "smell": 1,
+      "menu": 1,
+      "space": 2,
+      "social": 1,
+      "sensory": 1
+    },
+    "tips": "Platzhalter-Eintrag zur Veranschaulichung des Datenschemas. Bitte durch einen echten, geprüften Ort ersetzen.",
+    "lastVerified": "2026-07-29"
+  },
+  {
+    "id": "restaurant-beispiel-stuttgart",
+    "name": "Restaurant Weitblick (Beispiel)",
+    "category": "Restaurant",
+    "city": "Stuttgart",
+    "country": "Deutschland",
+    "address": "Beispielweg 2, 70174 Stuttgart",
+    "lat": 48.7784,
+    "lng": 9.1815,
+    "website": "",
+    "criteria": {
+      "light": 2,
+      "noise": 2,
+      "music": 2,
+      "smell": 2,
+      "menu": 3,
+      "space": 1,
+      "social": 2,
+      "sensory": 2
+    },
+    "tips": "Platzhalter-Eintrag mit gemischten Werten, um die Filterfunktion zu demonstrieren.",
+    "lastVerified": "2026-07-29"
+  }
+]

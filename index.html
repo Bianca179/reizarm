@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>reizarm – Orte ohne Reizüberflutung</title>
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <h1>reizarm</h1>
+  <p>Cafés, Restaurants &amp; Orte, an denen dich die Reize nicht gegenseitig anschreien.
+     Start: Stuttgart – bald ganz Europa.</p>
+  <a id="submit-place-link" class="submit-place-btn" href="#" target="_blank" rel="noopener">Ort vorschlagen</a>
+</header>
+
+<main class="layout">
+  <aside class="filters" aria-label="Filter">
+    <h2>Filter</h2>
+
+    <div class="filter-group">
+      <label for="filter-city">Stadt</label>
+      <select id="filter-city">
+        <option value="">Alle</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <span class="filter-group-label">Kategorie</span>
+      <div id="filter-categories" class="checkbox-list"></div>
+    </div>
+
+    <div class="filter-group">
+      <span class="filter-group-label">Reizschwellen</span>
+      <p class="hint">"nur sehr reizarm" zeigt ausschließlich Orte mit Bestwert (1) in diesem Kriterium.</p>
+      <div id="filter-criteria" class="criteria-filters"></div>
+    </div>
+
+    <button id="filter-reset" type="button">Filter zurücksetzen</button>
+  </aside>
+
+  <section class="map-wrap">
+    <div id="map"></div>
+  </section>
+
+  <section class="results" aria-label="Ergebnisse">
+    <h2><span id="result-count">0</span> Orte gefunden</h2>
+    <div id="place-list" class="place-list"></div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <p>Bewertungen basieren auf Selbstauskunft der Beitragenden, nicht auf Garantien.
+     Datenschema &amp; Mitmachen: siehe <a href="README.md">README</a>.</p>
+</footer>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
