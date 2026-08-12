@@ -1,6 +1,25 @@
 // Öffentliches Einreichungsformular (Airtable Form-View, ohne Account nutzbar).
 // Nach dem Anlegen des Form-Views in Airtable hier den Share-Link eintragen.
-const SUBMISSION_FORM_URL = "";
+const SUBMISSION_FORM_URL = "https://airtable.com/appPQ9KSqKDuS4HaC/shrNNXKHl24dCtDTy";
+
+// Nur-Lese-Zugriff auf die Airtable-Base, damit neue Einreichungen sofort
+// erscheinen, ohne dass jemand manuell einen Commit machen muss. Der Token
+// MUSS auf data.records:read und genau diese eine Base beschränkt sein,
+// da er im Frontend für alle sichtbar ist.
+const AIRTABLE_BASE_ID = "appPQ9KSqKDuS4HaC";
+const AIRTABLE_TABLE_NAME = "Orte";
+const AIRTABLE_READ_TOKEN = "";
+
+const AIRTABLE_FIELD_TO_CRITERIA = {
+  Licht: "light",
+  Geräuschkulisse: "noise",
+  Musik: "music",
+  "Düfte/Gerüche": "smell",
+  Speisekarte: "menu",
+  "Räumliche Faktoren": "space",
+  "Soziale Reize": "social",
+  "Sensorik allgemein": "sensory",
+};
 
 // Nur-Lese-Zugriff auf die Airtable-Base, damit neue Einreichungen sofort
 // erscheinen, ohne dass jemand manuell einen Commit machen muss. Der Token
