@@ -40,28 +40,42 @@ Der "Ort vorschlagen"-Button auf der Seite führt zu einem öffentlichen
 Airtable-Formular. Jede:r kann dort ohne Account eine eigene Erfahrung
 eintragen – Bewertung pro Kriterium, Adresse, Tipps.
 
-Einreichungen landen zunächst in der Airtable-Base **"reizarm
-Einreichungen"** (Tabelle `Orte`, Status `Neu`) und erscheinen **nicht**
-automatisch auf der Karte. Ein:e Kurator:in prüft neue Einträge, setzt den
-Status auf `Geprüft`/`Abgelehnt` und übernimmt geprüfte Orte manuell nach
-dem Schema unten in `data/places.json` (Status dann `Übernommen`). Das ist
-bewusst kein Vollautomatismus, damit keine ungeprüften/falschen
-Reiz-Bewertungen live gehen.
+**Einreichung und Sichtbarkeit sind entkoppelt:** Neue Einträge erscheinen
+sofort auf der Karte (als "Community-Eintrag · ungeprüft" gekennzeichnet),
+ohne dass jemand sie vorher freigeben muss. Die Website liest die
+Airtable-Tabelle `Orte` live über einen Nur-Lese-API-Token mit. Moderation
+passiert danach: Ein:e Kurator:in sichtet neue Einträge in Airtable in
+Ruhe und kann Unsinn/Spam per Status `Abgelehnt` (verschwindet sofort von
+der Website) oder durch Löschen der Zeile entfernen. Besonders vertrauens­
+würdige Einträge können optional zusätzlich in `data/places.json`
+übernommen werden (dann ohne "ungeprüft"-Badge) – das ist aber keine
+Voraussetzung fürs Erscheinen.
 
-### Setup des Formulars (einmalig, in der Airtable-Oberfläche)
+Fehlende Koordinaten (Einreichende geben nur eine Adresse an) werden
+client-seitig automatisch per OpenStreetMap-Nominatim geokodiert.
 
-Die Base samt Tabelle und allen Feldern ist bereits angelegt – nur der
-öffentliche Form-View fehlt noch, weil das Erstellen von Formularen über
-die verfügbare API nicht möglich ist:
+### Setup (einmalig, in der Airtable-Oberfläche)
 
-1. Base "reizarm Einreichungen" → Tabelle `Orte` öffnen.
-2. Über dem Grid auf **"+"** neben den View-Reitern klicken → **Form** wählen.
-3. Das Feld `Status` im Formular-Editor ausblenden (nicht für Einreichende
-   gedacht, bleibt leer = entspricht `Neu`).
-4. Oben rechts **"Share form"** → Link kopieren.
-5. Den Link in `app.js` bei `SUBMISSION_FORM_URL` eintragen (oder mir
-   geben, dann trage ich ihn ein) – der Button erscheint dann automatisch
-   auf der Seite (er ist ausgeblendet, solange die URL leer ist).
+Die Base samt Tabelle und allen Feldern ist bereits angelegt. Zwei Dinge
+lassen sich nicht über die verfügbare API erledigen, weil beides bewusst
+manuelle Sicherheits-/Freigabeschritte von Airtable sind – das Erstellen
+eines öffentlichen Formulars und das Ausstellen eines API-Tokens:
+
+1. **Formular:** Tabelle `Orte` öffnen → "+" neben den View-Reitern →
+   **Form**. Feld `Status` im Formular-Editor ausblenden. Oben rechts
+   **"Share form"** → Link kopieren → in `app.js` bei
+   `SUBMISSION_FORM_URL` eintragen (oder mir geben).
+2. **Nur-Lese-Token:** Profilsymbol oben rechts → **Developer hub** →
+   "Personal access tokens" → **Create token**. Scope: nur
+   `data.records:read`. Access: nur die Base "reizarm Einreichungen"
+   auswählen (keine anderen Bases!). Token erstellen, Wert kopieren (nur
+   einmal sichtbar) → in `app.js` bei `AIRTABLE_READ_TOKEN` eintragen
+   (oder mir geben).
+
+**Sicherheitshinweis:** Der Token landet im öffentlich sichtbaren
+Frontend-Code. Er darf deshalb **ausschließlich** Lesezugriff auf genau
+diese eine Base haben – niemals einen Token mit Schreib- oder
+Vollzugriff hier eintragen.
 
 ### Direkter Weg für technische Beitragende
 
@@ -107,7 +121,9 @@ bitte durch echte, geprüfte Orte ersetzen bzw. ergänzen.
 
 - [x] MVP: statische Seite, Karte, Filter, Stuttgart-Startdaten (Platzhalter)
 - [x] Airtable-Base für öffentliche Einreichungen ohne Account
+- [x] Live-Einbindung: Einreichung und Sichtbarkeit entkoppelt, Adress-Geokodierung
 - [ ] Form-View in Airtable einrichten und Link in `app.js` eintragen
+- [ ] Nur-Lese-Token erstellen und in `app.js` eintragen
 - [ ] Echte Stuttgart-Orte recherchieren und eintragen
 - [ ] Ausweitung auf weitere deutsche/europäische Städte
 - [ ] Mobile-Optimierung / PWA

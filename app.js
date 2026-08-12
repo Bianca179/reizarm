@@ -2,6 +2,25 @@
 // Nach dem Anlegen des Form-Views in Airtable hier den Share-Link eintragen.
 const SUBMISSION_FORM_URL = "";
 
+// Nur-Lese-Zugriff auf die Airtable-Base, damit neue Einreichungen sofort
+// erscheinen, ohne dass jemand manuell einen Commit machen muss. Der Token
+// MUSS auf data.records:read und genau diese eine Base beschränkt sein,
+// da er im Frontend für alle sichtbar ist.
+const AIRTABLE_BASE_ID = "appPQ9KSqKDuS4HaC";
+const AIRTABLE_TABLE_NAME = "Orte";
+const AIRTABLE_READ_TOKEN = "";
+
+const AIRTABLE_FIELD_TO_CRITERIA = {
+  Licht: "light",
+  Geräuschkulisse: "noise",
+  Musik: "music",
+  "Düfte/Gerüche": "smell",
+  Speisekarte: "menu",
+  "Räumliche Faktoren": "space",
+  "Soziale Reize": "social",
+  "Sensorik allgemein": "sensory",
+};
+
 const CRITERIA = [
   { key: "light", label: "Licht" },
   { key: "noise", label: "Geräusche" },
@@ -24,8 +43,8 @@ let map;
 let markers = new Map(); // place.id -> Leaflet marker
 
 async function init() {
-  const res = await fetch("data/places.json");
-  state.places = await res.json();
+  const [curated, community] = await Promise.all([loadCuratedPlaces(), loadCommunityPlaces()]);
+  state.places = [...curated, ...community];
 
   map = L.map("map").setView([48.7758, 9.1829], 12);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -46,6 +65,89 @@ async function init() {
   document.getElementById("filter-reset").addEventListener("click", resetFilters);
 
   render();
+  geocodeMissingCoordinates(state.places).then(render);
+}
+
+async function loadCuratedPlaces() {
+  const res = await fetch("data/places.json");
+  const places = await res.json();
+  return places.map((p) => ({ ...p, source: "curated" }));
+}
+
+async function loadCommunityPlaces() {
+  if (!AIRTABLE_READ_TOKEN) return [];
+  const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE_NAME)}`;
+  try {
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${AIRTABLE_READ_TOKEN}` } });
+    if (!res.ok) throw new Error(`Airtable antwortete mit ${res.status}`);
+    const data = await res.json();
+    return (data.records || [])
+      .filter((record) => record.fields["Status"] !== "Abgelehnt")
+      .map(recordToPlace)
+      .filter(Boolean);
+  } catch (err) {
+    console.warn("Community-Einträge konnten nicht geladen werden:", err);
+    return [];
+  }
+}
+
+function recordToPlace(record) {
+  const f = record.fields;
+  if (!f["Name des Orts"]) return null;
+
+  const criteria = {};
+  for (const { key } of CRITERIA) criteria[key] = 2;
+  for (const [fieldName, key] of Object.entries(AIRTABLE_FIELD_TO_CRITERIA)) {
+    criteria[key] = parseLevel(f[fieldName]);
+  }
+
+  return {
+    id: `airtable-${record.id}`,
+    name: f["Name des Orts"],
+    category: f["Kategorie"] || "Sonstiges",
+    city: f["Stadt"] || "",
+    country: f["Land"] || "",
+    address: f["Adresse"] || "",
+    website: f["Website"] || "",
+    lat: null,
+    lng: null,
+    criteria,
+    tips: f["Tipps"] || "",
+    source: "community",
+  };
+}
+
+function parseLevel(value) {
+  const match = /^(\d)/.exec(value || "");
+  return match ? Number(match[1]) : 2;
+}
+
+async function geocodeMissingCoordinates(places) {
+  for (const place of places) {
+    if (place.lat != null && place.lng != null) continue;
+    const query = [place.address, place.city, place.country].filter(Boolean).join(", ");
+    if (!query) continue;
+    try {
+      const coords = await geocodeAddress(query);
+      if (coords) Object.assign(place, coords);
+    } catch (err) {
+      console.warn("Geokodierung fehlgeschlagen für", place.name, err);
+    }
+    await delay(1100); // Nominatim-Nutzungsrichtlinie: max. 1 Anfrage/Sekunde
+  }
+}
+
+async function geocodeAddress(query) {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  const results = await res.json();
+  if (!results.length) return null;
+  return { lat: parseFloat(results[0].lat), lng: parseFloat(results[0].lon) };
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function setupSubmissionLink() {
@@ -59,7 +161,7 @@ function setupSubmissionLink() {
 
 function buildCityFilter() {
   const select = document.getElementById("filter-city");
-  const cities = [...new Set(state.places.map((p) => p.city))].sort();
+  const cities = [...new Set(state.places.map((p) => p.city).filter(Boolean))].sort();
   for (const city of cities) {
     const opt = document.createElement("option");
     opt.value = city;
@@ -70,7 +172,7 @@ function buildCityFilter() {
 
 function buildCategoryFilter() {
   const container = document.getElementById("filter-categories");
-  const categories = [...new Set(state.places.map((p) => p.category))].sort();
+  const categories = [...new Set(state.places.map((p) => p.category).filter(Boolean))].sort();
   for (const category of categories) {
     const label = document.createElement("label");
     const checkbox = document.createElement("input");
@@ -151,14 +253,13 @@ function renderMarkers(filtered) {
   for (const marker of markers.values()) map.removeLayer(marker);
   markers.clear();
 
-  const visibleIds = new Set(filtered.map((p) => p.id));
   for (const place of filtered) {
+    if (place.lat == null || place.lng == null) continue;
     const marker = L.marker([place.lat, place.lng]).addTo(map);
     marker.bindPopup(`<strong>${escapeHtml(place.name)}</strong><br>${escapeHtml(place.category)}`);
     marker.on("click", () => highlightCard(place.id));
     markers.set(place.id, marker);
   }
-  void visibleIds;
 }
 
 function renderList(filtered) {
@@ -175,11 +276,21 @@ function renderList(filtered) {
       return `<span class="badge" data-level="${level}">${label}: ${levelLabel(level)}</span>`;
     }).join("");
 
+    const communityTag =
+      place.source === "community"
+        ? `<span class="badge badge-community">Community-Eintrag · ungeprüft</span>`
+        : "";
+    const locationNote =
+      place.lat == null || place.lng == null
+        ? `<p class="hint">Standort konnte nicht automatisch gefunden werden.</p>`
+        : "";
+
     card.innerHTML = `
       <h3>${escapeHtml(place.name)}</h3>
       <p class="meta">${escapeHtml(place.category)} · ${escapeHtml(place.city)}</p>
-      <div class="criteria-badges">${badges}</div>
+      <div class="criteria-badges">${communityTag}${badges}</div>
       <p class="tips">${escapeHtml(place.tips || "")}</p>
+      ${locationNote}
     `;
 
     card.addEventListener("click", () => focusPlace(place));
@@ -192,6 +303,10 @@ function levelLabel(level) {
 }
 
 function focusPlace(place) {
+  if (place.lat == null || place.lng == null) {
+    highlightCard(place.id);
+    return;
+  }
   map.setView([place.lat, place.lng], 15);
   const marker = markers.get(place.id);
   if (marker) marker.openPopup();

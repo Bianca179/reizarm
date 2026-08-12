@@ -232,6 +232,12 @@ body {
 .badge[data-level="2"] { background: #f2e6c8; }
 .badge[data-level="3"] { background: #f2cfc8; }
 
+.badge-community {
+  background: transparent;
+  border: 1px solid var(--muted);
+  color: var(--muted);
+}
+
 @media (prefers-color-scheme: dark) {
   .badge[data-level="2"] { background: #4a4230; }
   .badge[data-level="3"] { background: #4a332f; }
