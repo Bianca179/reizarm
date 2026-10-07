@@ -21,25 +21,6 @@ const AIRTABLE_FIELD_TO_CRITERIA = {
   "Sensorik allgemein": "sensory",
 };
 
-// Nur-Lese-Zugriff auf die Airtable-Base, damit neue Einreichungen sofort
-// erscheinen, ohne dass jemand manuell einen Commit machen muss. Der Token
-// MUSS auf data.records:read und genau diese eine Base beschränkt sein,
-// da er im Frontend für alle sichtbar ist.
-const AIRTABLE_BASE_ID = "appPQ9KSqKDuS4HaC";
-const AIRTABLE_TABLE_NAME = "Orte";
-const AIRTABLE_READ_TOKEN = "";
-
-const AIRTABLE_FIELD_TO_CRITERIA = {
-  Licht: "light",
-  Geräuschkulisse: "noise",
-  Musik: "music",
-  "Düfte/Gerüche": "smell",
-  Speisekarte: "menu",
-  "Räumliche Faktoren": "space",
-  "Soziale Reize": "social",
-  "Sensorik allgemein": "sensory",
-};
-
 const CRITERIA = [
   { key: "light", label: "Licht" },
   { key: "noise", label: "Geräusche" },
@@ -56,7 +37,10 @@ const state = {
   city: "",
   categories: new Set(),
   criteriaMax: {}, // key -> 1 | 2 | undefined (undefined = egal)
+  minQuality: undefined, // 1-5 | undefined (undefined = egal)
 };
+
+const EUROPE_VIEW = { center: [50.5, 10.5], zoom: 4 };
 
 let map;
 let markers = new Map(); // place.id -> Leaflet marker
@@ -65,7 +49,7 @@ async function init() {
   const [curated, community] = await Promise.all([loadCuratedPlaces(), loadCommunityPlaces()]);
   state.places = [...curated, ...community];
 
-  map = L.map("map").setView([48.7758, 9.1829], 12);
+  map = L.map("map").setView(EUROPE_VIEW.center, EUROPE_VIEW.zoom);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: "&copy; OpenStreetMap-Mitwirkende",
@@ -74,6 +58,7 @@ async function init() {
   buildCityFilter();
   buildCategoryFilter();
   buildCriteriaFilters();
+  buildQualityFilter();
   setupSubmissionLink();
 
   document.getElementById("filter-city").addEventListener("change", (e) => {
@@ -131,6 +116,7 @@ function recordToPlace(record) {
     lat: null,
     lng: null,
     criteria,
+    quality: f["Qualität (Essen/Service)"] || null,
     tips: f["Tipps"] || "",
     source: "community",
   };
@@ -238,14 +224,30 @@ function buildCriteriaFilters() {
   }
 }
 
+function buildQualityFilter() {
+  const select = document.getElementById("filter-quality");
+  select.innerHTML = `
+    <option value="">egal</option>
+    <option value="3">ab 3 ★</option>
+    <option value="4">ab 4 ★</option>
+    <option value="5">nur 5 ★</option>
+  `;
+  select.addEventListener("change", (e) => {
+    state.minQuality = e.target.value ? Number(e.target.value) : undefined;
+    render();
+  });
+}
+
 function resetFilters() {
   state.city = "";
   state.categories.clear();
   state.criteriaMax = {};
+  state.minQuality = undefined;
 
   document.getElementById("filter-city").value = "";
   document.querySelectorAll("#filter-categories input").forEach((cb) => (cb.checked = false));
   document.querySelectorAll("#filter-criteria select").forEach((sel) => (sel.value = ""));
+  document.getElementById("filter-quality").value = "";
 
   render();
 }
@@ -257,6 +259,7 @@ function getFilteredPlaces() {
     for (const [key, max] of Object.entries(state.criteriaMax)) {
       if (max !== undefined && place.criteria[key] > max) return false;
     }
+    if (state.minQuality !== undefined && (place.quality || 0) < state.minQuality) return false;
     return true;
   });
 }
@@ -278,6 +281,13 @@ function renderMarkers(filtered) {
     marker.bindPopup(`<strong>${escapeHtml(place.name)}</strong><br>${escapeHtml(place.category)}`);
     marker.on("click", () => highlightCard(place.id));
     markers.set(place.id, marker);
+  }
+
+  if (markers.size > 0) {
+    const bounds = L.latLngBounds([...markers.values()].map((m) => m.getLatLng()));
+    map.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
+  } else {
+    map.setView(EUROPE_VIEW.center, EUROPE_VIEW.zoom);
   }
 }
 
@@ -303,10 +313,14 @@ function renderList(filtered) {
       place.lat == null || place.lng == null
         ? `<p class="hint">Standort konnte nicht automatisch gefunden werden.</p>`
         : "";
+    const qualityHtml = place.quality
+      ? `<p class="quality" title="Allgemeine Qualität (Essen/Service), unabhängig von der Reizarmut">${starString(place.quality)}</p>`
+      : "";
 
     card.innerHTML = `
       <h3>${escapeHtml(place.name)}</h3>
       <p class="meta">${escapeHtml(place.category)} · ${escapeHtml(place.city)}</p>
+      ${qualityHtml}
       <div class="criteria-badges">${communityTag}${badges}</div>
       <p class="tips">${escapeHtml(place.tips || "")}</p>
       ${locationNote}
@@ -315,6 +329,10 @@ function renderList(filtered) {
     card.addEventListener("click", () => focusPlace(place));
     list.appendChild(card);
   }
+}
+
+function starString(quality) {
+  return "★".repeat(quality) + "☆".repeat(5 - quality);
 }
 
 function levelLabel(level) {

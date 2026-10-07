@@ -19,6 +19,7 @@
       "social": 1,
       "sensory": 1
     },
+    "quality": 4,
     "tips": "Platzhalter-Eintrag zur Veranschaulichung des Datenschemas. Bitte durch einen echten, geprüften Ort ersetzen.",
     "lastVerified": "2026-07-29"
   },
@@ -42,6 +43,7 @@
       "social": 2,
       "sensory": 2
     },
+    "quality": 3,
     "tips": "Platzhalter-Eintrag mit gemischten Werten, um die Filterfunktion zu demonstrieren.",
     "lastVerified": "2026-07-29"
   }

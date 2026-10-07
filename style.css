@@ -212,6 +212,12 @@ body {
   margin: 0 0 0.5rem;
 }
 
+.place-card .quality {
+  margin: 0 0 0.5rem;
+  color: #c9971c;
+  letter-spacing: 0.05em;
+}
+
 .criteria-badges {
   display: flex;
   flex-wrap: wrap;

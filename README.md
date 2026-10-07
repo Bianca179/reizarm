@@ -5,7 +5,9 @@ sensorische Reize gleichzeitig auf Besucher:innen wirken lassen –
 gemacht für neurodivergente Menschen (Autismus, ADHS, Hochsensibilität, ...),
 aber nützlich für alle, die Reizüberflutung vermeiden wollen.
 
-Start: Stuttgart. Ziel: ganz Europa.
+Offen für ganz Europa – jede Stadt und jedes Land kann eingetragen werden,
+es gibt keine Städte-Beschränkung im Code. Die Karte zeigt standardmäßig
+Europa im Überblick und zoomt automatisch auf die aktuell sichtbaren Orte.
 
 ## Konzept
 
@@ -26,6 +28,11 @@ nach vagen "gemütlich"-Beschreibungen.
 
 Jeder Eintrag hat außerdem freien Text (`tips`) für konkrete Hinweise,
 z. B. "ruhiger Tisch hinten links" oder "Kopfhörer werden nicht schräg angeschaut".
+
+Optional kommt eine unabhängige **Sterne-Bewertung** (`quality`, 1-5) für
+Essen/Service dazu. Bewusst getrennt von den Reiz-Kriterien: ein ruhiger,
+reizarmer Ort mit schlechtem Essen oder schlechtem Service hilft ja auch
+nicht weiter, und umgekehrt sagt "5 Sterne toll" nichts über Reizarmut aus.
 
 ## Struktur
 
@@ -77,6 +84,12 @@ Frontend-Code. Er darf deshalb **ausschließlich** Lesezugriff auf genau
 diese eine Base haben – niemals einen Token mit Schreib- oder
 Vollzugriff hier eintragen.
 
+**Neues Feld im bestehenden Formular sichtbar machen:** Das Feld
+"Qualität (Essen/Service)" wurde nachträglich zur Tabelle hinzugefügt.
+Airtable nimmt neue Felder nicht automatisch in ein bereits erstelltes
+Formular auf – bitte einmal im Formular-Editor prüfen und das Feld bei
+Bedarf manuell einblenden.
+
 ### Direkter Weg für technische Beitragende
 
 Wer mit Git/GitHub vertraut ist, kann Orte weiterhin direkt per Pull
@@ -105,10 +118,14 @@ Request eintragen – siehe Schema unten.
     "social": 1,
     "sensory": 1
   },
+  "quality": 4,
   "tips": "Kurzer, konkreter Hinweis.",
   "lastVerified": "2026-07-29"
 }
 ```
+
+`quality` ist optional (1-5, Sterne) und kann weggelassen werden, wenn
+keine Einschätzung zu Essen/Service vorliegt.
 
 **Wichtig:** Bewertungen sollten auf tatsächlichem Vor-Ort-Erleben beruhen,
 nicht auf Vermutung. `lastVerified` hilft, veraltete Einträge zu erkennen.
@@ -122,8 +139,9 @@ bitte durch echte, geprüfte Orte ersetzen bzw. ergänzen.
 - [x] MVP: statische Seite, Karte, Filter, Stuttgart-Startdaten (Platzhalter)
 - [x] Airtable-Base für öffentliche Einreichungen ohne Account
 - [x] Live-Einbindung: Einreichung und Sichtbarkeit entkoppelt, Adress-Geokodierung
-- [ ] Form-View in Airtable einrichten und Link in `app.js` eintragen
+- [x] Form-View in Airtable eingerichtet, Link in `app.js` eingetragen
+- [x] Europaweit geöffnet: keine Städte-/Länder-Beschränkung mehr, Karte zeigt
+      standardmäßig Europa und zoomt automatisch auf vorhandene Orte
 - [ ] Nur-Lese-Token erstellen und in `app.js` eintragen
-- [ ] Echte Stuttgart-Orte recherchieren und eintragen
-- [ ] Ausweitung auf weitere deutsche/europäische Städte
+- [ ] Echte Orte recherchieren und eintragen (beliebige Stadt/Land)
 - [ ] Mobile-Optimierung / PWA
